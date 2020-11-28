@@ -11,9 +11,9 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "express": "^4.17.1",
+    "express": "^4.16.4",
     "express-handlebars": "^3.0.2",
-    "mongoose": "^5.10.17",
+    "mongoose": "^5.10.16",
     "uuid": "^3.3.2"
   },
   "devDependencies": {
