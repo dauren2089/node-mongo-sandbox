@@ -2,7 +2,6 @@ const { Router } = require('express');
 const router = Router();
 const Course = require('../models/course');
 
-
 router.get('/:id', async (req, res) => {
     if (!req.query.allow) {
         return res.redirect('/')
@@ -21,26 +20,18 @@ router.get('/:id', async (req, res) => {
 });
 
 router.post('/', async (req, res) => {
-    // Создаем новый модель course c объектами title, price и img.
-    // к которые будут брать значения с REQ.BODY.OBJECT переданные c формы.
-    const course = new Course({
-        title: req.body.title,
-        price: req.body.price,
-        img: req.body.img
-    });
-
-    try {
-        // сохраняем модель в БД
-        await course.save();
-        // перенаправляем в главную страницу.
-        res.redirect('/');
-    } catch (e) {
-        console.log(e)
-    }
-
+    console.log(req.body.id, req.body._id)
+    const id = req.body.id
+    // const { id } = req.body
+    // delete req.body.id
+    // метод findByIdAndUpdate() находит выбранный курс по ID и обновляет содержимое курса
+    const course = await Course.findByIdAndUpdate(id, req.body);
+    console.log("Updated!")
+    res.redirect('/')
 });
 
 router.post('/delete', async (req, res) => {
     res.render('index');
 })
+
 module.exports = router;

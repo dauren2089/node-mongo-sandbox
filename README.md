@@ -260,14 +260,12 @@ module.exports = router;
 Роут для сохранения отредактированных данных
 ```js
 router.post('/', async (req, res) => {
-    // метод .findById() = находит объекты по id из mongoDB
-    // req.params = получает значения из переданной адресной строки, где req.params.id == localhost/edit/:id
-    const editCourse = await Course.findById(req.params.id).lean()
+    const id = req.body.id
 
-    // отрисовка страницы edit с данными title, course
-    res.render('course-edit', {
-        title: `Редактировать ${editCourse.title}`,
-        editCourse
-    });
+    // метод findByIdAndUpdate() находит выбранный курс по ID и обновляет содержимое курса
+    const course = await Course.findByIdAndUpdate(id, req.body);
+
+    res.redirect('/')
 });
 ```
+
