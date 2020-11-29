@@ -257,7 +257,10 @@ router.get('/:id', async (req, res) => {
 module.exports = router;
 ```
 
+## Обновление данных
+
 Роут для сохранения отредактированных данных
+
 ```js
 router.post('/', async (req, res) => {
     const id = req.body.id
@@ -269,3 +272,21 @@ router.post('/', async (req, res) => {
 });
 ```
 
+## Удаление Данных
+Добавим кнопку удаления в index.hbs, где formaction="/edit/delete" будет указывать на маршрут
+```html
+ <button type="submit" formaction="/edit/delete" class="btn red">Удалить курс</button>
+```
+
+
+Роут для удаления данных
+```js
+router.post('/', async (req, res) => {
+    const id = req.body.id
+
+    // метод findByIdAndUpdate() находит выбранный курс по ID и обновляет содержимое курса
+    const course = await Course.findByIdAndDelete(id, req.body);
+
+    res.redirect('/')
+});
+```

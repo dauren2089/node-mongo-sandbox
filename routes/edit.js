@@ -31,7 +31,9 @@ router.post('/', async (req, res) => {
 });
 
 router.post('/delete', async (req, res) => {
-    res.render('index');
+    await Course.findByIdAndDelete(req.body.id, req.body);
+    console.log("Deleted!")
+    res.redirect('/');
 })
 
 module.exports = router;
