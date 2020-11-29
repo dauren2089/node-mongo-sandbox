@@ -16,7 +16,7 @@ router.post('/', async (req, res) => {
         title: req.body.title,
         price: req.body.price,
         img: req.body.img
-    })
+    });
 
     try {
         // сохраняем модель в БД
@@ -27,6 +27,6 @@ router.post('/', async (req, res) => {
         console.log(e)
     }
 
-})
+});
 
 module.exports = router;

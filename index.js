@@ -7,8 +7,9 @@ const handlebars = require('express-handlebars');
 // const { allowInsecurePrototypeAccess } = require('@handlebars/allow-prototype->access');
 
 const homeRoutes = require('./routes/home');
-const addRoutes = require('./routes/add');
 const editRoutes = require('./routes/edit');
+const coursesRoutes = require('./routes/courses');
+const addRoutes = require('./routes/add');
 
 const url = require('./credentials')
 
@@ -31,6 +32,7 @@ app.use(express.static(path.join(__dirname, 'public')))
 app.use(express.urlencoded({extended: true}))
 // Основные маршруты
 app.use('/', homeRoutes);
+// app.use('/courses', coursesRoutes);
 app.use('/add', addRoutes);
 app.use('/edit', editRoutes);
 
