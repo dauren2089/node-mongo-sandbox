@@ -42,6 +42,12 @@
             <h1>Создать аккаунт</h1>
             <form action="/auth/register" method="POST">
                 <div class="input-field">
+                    <input id="name" name="name" type="text" class="validate" required>
+                    <label for="name">Имя</label>
+                    <span class="helper-text" data-error="Введите имя"></span>
+                </div>
+
+                <div class="input-field">
                     <input id="remail" name="email" type="email" class="validate" required>
                     <label for="remail">Email</label>
                     <span class="helper-text" data-error="Введите email"></span>
@@ -55,14 +61,8 @@
 
                 <div class="input-field">
                     <input id="confirm" name="confirm" type="password" class="validate" required>
-                    <label for="confirm">Пароль еще раз</label>
+                    <label for="confirm">Повторите пароль</label>
                     <span class="helper-text" data-error="Введите пароль"></span>
-                </div>
-
-                <div class="input-field">
-                    <input id="name" name="name" type="text" class="validate" required>
-                    <label for="name">Ваше имя</label>
-                    <span class="helper-text" data-error="Введите имя"></span>
                 </div>
 
                 <input type="hidden" name="_csrf" value="{{csrf}}">
