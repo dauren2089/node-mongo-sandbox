@@ -40,83 +40,10 @@ const courseSchema = new Schema({
     },
     img: String
 })
+
 // экспортируем модель
 module.exports = model('Course', courseSchema)
-```
-
-## Отрисовка данных
-
-Для начало создаем входной файл app.js:
-```js
-// Импортируем зависимости
-const mongoose = require('mongoose');
-//  Импортируем основные роуты
-const homeRoutes = require('./routes/home');
-const editRoutes = require('./routes/edit');
-const coursesRoutes = require('./routes/courses');
-const addRoutes = require('./routes/add');
-
-// Настраиваем основные маршруты
-app.use('/', homeRoutes);
-app.use('/add', addRoutes);
-app.use('/edit', editRoutes);
-
-// middleware для обработки страниц ошибок 404
-app.use(function (req, res){
-    res.type('text/plain');
-    res.status(404);
-    res.send('404 - Не найдено!');
-});
-
-// Функция для запуска сервера
-async function startServer() {
-    try {
-        //соединяемся с сервером MongoDB, url.mongo.uri -  url ключ для подключения к MongoDB
-        await mongoose.connect(url.mongo.uri, {
-            useNewUrlParser: true,
-            useUnifiedTopology: true,
-            useFindAndModify: false
-        })
-
-        app.listen(PORT, () => {
-            console.log(`Server is running on port ${PORT}`)
-        })
-    } catch (e) {
-        console.log(e)
-    }
-}
-
-startServer()
-```
-
-### Отображение всех курсов из mongoDB 
-
-Создаем страницу  index.hbs, где будут отображаться данные:
-```html
-{{#if courses.length}}
-    {{#each courses}}
-        <div class="row">
-            <div class="col s6 offset-s3">
-                <div class="card">
-                    <div class="card-image">
-                        <img src="{{img}}" alt="{{title}}">
-                    </div>
-                    <div class="card-content">
-                        <span class="card-title">{{title}}</span>
-                        <p class="price">{{price}}</p>
-                    </div>
-                    <div class="card-action actions">
-                        <a href="/course/{{_id}}" target="_blank">Открыть курс</a>
-                        <a href="/edit/{{_id}}?allow=true">Редактировать</a>
-                    </div>
-                </div>
-            </div>
-        </div>
-    {{/each}}
-{{else}}
-    <p>Курсов пока нет</p>
-{{/if}}
-```
+````
 
 ### Создание Роутов
 
@@ -128,165 +55,502 @@ const router = Router();
 // импортируем модель курсов
 const Course = require('../models/course');
 
-// Маршрут '/', который выводит главную страницу
-router.get('/',  async (req, res) => {
-    //метод .find находит все объекты в mongoDB, метод .lean выводит только основные параметры.
-    const courses = await Course.find().lean()
-    // рендерим главную страницы с полученными данными (courses) из БД
-    res.render('index', {
+// Маршрут GET '/', который выводит главную страницу
+router.get('/', async (req, res) => {
+    //метод .find находит все объекты в БД
+    const courses = await Course.find()
+        .populate('userId', 'email name')
+
+    res.render('main', {
         title: 'Главная страница',
         isHome: true,
         courses
     })
-});
+})
 
 // экспортируем маршрут
 module.exports = router;
 ```
 
-## Добавление данных в MongoDB
+## Авторизация
 
-Основная формы для отправки данных add.hbs
+Шаблоны авторизации на сайте на node.js
+
+#### Создание страниц авторизации
+
+Создаем отдельную папку в Views с названием Auth. Внутри создаем файл с названием login.handlebars:
+
 ```html
-<h1>Добавить новый курс</h1>
+<section class="auth">
+    <div class="row">
+        <div class="col s12">
+            <ul class="tabs">
+                <li class="tab col s6">
+                    <a href="#login" class="link active">Войти</a>
+                </li>
+                <li class="tab col s6">
+                    <a href="#register" class="link">Регистрация</a>
+                </li>
+            </ul>
+        </div>
+        <div id="login" class="col s6 offset-s3">
+            <h3>Войти в систему</h3>
 
-<form action="/add" method="POST">
-    <div class="input-field">
-        <input id="title" name="title" type="text" class="validate" required>
-        <label for="title">Название курса</label>
-        <span class="helper-text" data-error="Введите название"></span>
+            <form action="/auth/login" method="POST">
+                <div class="input-field">
+                    <input id="email" name="email" type="email" class="validate" required>
+                    <label for="email">email</label>
+                    <span class="helper-text" data-error="Введите email"></span>
+                </div>
+
+                <div class="input-field">
+                    <input id="password" name="password" type="password" class="validate" required min="1">
+                    <label for="password">Пароль</label>
+                    <span class="helper-text" data-error="Введите пароль"></span>
+                </div>
+                <button class="btn btn-primary" type="submit">Войти</button>
+            </form>
+        </div>
+        <div id="register" class="col s6 offset-s3">
+        <h3>Зарегистрироваться в систему</h3>
+
+            <form action="/auth/register" method="POST">
+                <div class="input-field">
+                    <input id="remail" name="email" type="email" class="validate" required>
+                    <label for="remail">email</label>
+                    <span class="helper-text" data-error="Введите email"></span>
+                </div>
+
+                <div class="input-field">
+                    <input id="rpassword" name="password" type="password" class="validate" required min="1">
+                    <label for="rpassword">Пароль</label>
+                    <span class="helper-text" data-error="Введите пароль"></span>
+                </div>
+
+                <div class="input-field">
+                    <input id="confirm" name="confirm" type="password" class="validate" required min="1">
+                    <label for="confirm">Повторите Пароль</label>
+                    <span class="helper-text" data-error="Повторите пароль"></span>
+                </div>
+
+                <button class="btn btn-primary" type="submit">Зарегистрироваться</button>
+            </form>
+        </div>
     </div>
+</section>
+```
+Страница будет служит для авторизации пользователей, где пользователи будут иметь возможность залогиниться или зарегистрироваться в систему.
 
-    <div class="input-field">
-        <input id="price" name="price" type="number" class="validate" required min="1">
-        <label for="price">Цена курса</label>
-        <span class="helper-text" data-error="Введите цену"></span>
-    </div>
-
-    <div class="input-field">
-        <input id="img" name="img" type="text" class="validate" required>
-        <label for="img">URL картинки</label>
-        <span class="helper-text" data-error="Введите url картинки"></span>
-    </div>
-
-    <button class="btn btn-primary">Добавить курс</button>
-</form>
+В навигационной панели (navbar.handlebars) добавляем ссылки на страницу авторизации:
+```html
+{{#if isLogin}}
+<li class="active"><a href="/auth/login">Войти</a></li>
+{{else}}
+<li><a href="/auth/login">Войти</a></li>
+{{/if}} 
 ```
 
-Route для добавления новых данных в mongoDB
+В navbar.html настраиваем разделяем ссылки для показа
+```html
+<nav>
+  <div class="nav-wrapper">
+    <a href="#" class="brand-logo">Приложение курсов</a>
+    <ul id="nav-mobile" class="right hide-on-med-and-down">
 
+      {{#if isAuth}}
+        {{#if isAdd}}
+          <li class="active"><a href="/add">Добавить курс</a></li>
+        {{else}}
+          <li><a href="/add">Добавить курс</a></li>
+        {{/if}} 
+
+        {{#if isCard}}
+          <li class="active"><a href="/card">Корзина</a></li>
+        {{else}}
+          <li><a href="/card">Корзина</a></li>
+        {{/if}}
+
+        {{#if isOrder}}
+          <li class="active"><a href="/orders">Заказы</a></li>
+        {{else}}
+          <li><a href="/orders">Заказы</a></li>
+        {{/if}}
+        <li><a href="/auth/logout">Выйти</a></li>
+      {{else}}
+        {{#if isLogin}}
+          <li class="active"><a href="/auth/login">Войти</a></li>
+        {{else}}
+          <li><a href="/auth/login">Войти</a></li>
+        {{/if}}
+      {{/if}}
+
+    </ul>
+  </div>
+</nav>
+```
+
+Важно отметить, что в данных примерах используется оформление - materialize. 
+
+Для инициализации подключенных табов от materialize(bootstrap) необходимо подключить js-script в файле app.js:
 ```js
-const { Router } = require('express');
-const router = Router();
-const Course = require('../models/course');
+M.Tabs.init(document.querySelectorAll('.tabs'));
+```
 
-router.get('/', (req, res) => {
-    res.render('add', {
-        title: 'Add new Course',
-        isAdd: true
-    });
+#### Устанавливаем необходимые модули
+Установка Express-session
+```sh
+$ npm i express-session
+```
+
+Установка Connect-mongodb-session
+```sh
+$ npm i connect-mongodb-session
+```
+
+Установка bcrypt:
+```sh
+$ npm i bcrypt
+```
+
+Установка csurf:
+```sh
+$ npm i csurf
+```
+
+Установка connect-flash:
+```sh
+$ npm i connect-flash
+```
+
+
+#### Создание Роутов на ExpressJS
+
+В главном файле /index.js добавляем импорты и регистрируем роут.
+```js
+const csrf = require('csurf')
+const mongoose = require('mongoose')
+const exphbs = require('express-handlebars')
+const session = require('express-session')
+const MongoDBStore = require('connect-mongodb-session')(session)
+
+const authRoute = require('./routes/auth');
+
+app.use('/auth', authRoute);
+
+//Далее основные маршруты
+//и Запуск сервера
+```
+
+Далее создаем новый Роут (/routes/auth.js) для страниц /login и /logout:
+```js
+const {Router} = require('express')
+const bcrypt = require('bcryptjs')
+const User = require('../models/user')
+const router = Router()
+
+router.get('/login', async (req, res) => {
+    res.render('auth/login', {
+        title: 'Авторизация',
+        isLogin: true
+    })
+})
+
+// Route для выхода из системы
+router.get('logout', async (req, res) => {
+    // вариант 1: указать isAuthenticated = false
+    // req.session.isAuthenticated = false;
+    
+    // вариант 2: воспользоваться медотом .destroy, который уничтожает все данные сессии
+    req.session.destroy(() => {
+        res.redirect('/auth/login#login')
+    }) 
 });
 
-router.post('/', async (req, res) => {
-    // Создаем новую модель course c объектами title, price и img.
-    // к которые будут брать значения с REQ.BODY.OBJECT переданные c формы.
-    const course = new Course({
-        title: req.body.title,
-        price: req.body.price,
-        img: req.body.img
-    });
+module.exports = router;
+````
+Который отвечать за перенаправление на страницу авторизации.
 
-    try {
-        // сохраняем модель в БД
-        await course.save();
-        // перенаправляем на главную страницу.
-        res.redirect('/');
-    } catch (e) {
-        console.log(e)
+Создаем роут для проверки авторизации пользователя в (/routes/auth.js):
+```js
+router.post('/login', async (req, res) => {
+  try {
+    const {email, password} = req.body
+    const candidate = await User.findOne({ email })
+    //  Проверяем введенный пароль с сохраненных паролем
+    if (candidate) {
+      const areSame = await bcrypt.compare(password, candidate.password)
+
+      if (areSame) {
+        req.session.user = candidate
+        req.session.isAuthenticated = true
+        // Воспользуемся методом .save для ожидания завершения всех операции session
+        req.session.save(err => {
+          if (err) {
+            throw err
+          }
+          res.redirect('/')
+        })
+      } else {
+        res.redirect('/auth/login#login')
+      }
+    } else {
+      res.redirect('/auth/login#login')
     }
-});
+  } catch (e) {
+    console.log(e)
+  }
+})
+````
 
-module.exports = router;
+Для регистрации добавляем новый роут в файле /routes/auth.js
+```js
+router.post('/register', async (req, res) => {
+  try {
+    // получаем от reg.body необходимые параметры
+    const {email, password, repeat, name} = req.body
+    // проверяем если такой email в базе
+    const candidate = await User.findOne({ email })
+    if (candidate) {
+        // если есть перенаправляем
+        res.redirect('/auth/login#register')
+    } else {
+        // Хэшируем пароль пользователя
+      const hashPassword = await bcrypt.hash(password, 10)
+      //если нет то создаем нового пользователя
+      const user = new User({
+        email, name, password: hashPassword, cart: {items: []}
+      })
+      await user.save()
+      res.redirect('/auth/login#login')
+    }
+  } catch (e) {
+    console.log(e)
+  }
+})
 ```
 
-## Редактирование Данных
-Создаем страницу .hbs, где будут редактироваться данные:
+#### Подключение Сессии
+
+Сессии необходимы для хранения данных пользователя при использовании сайта.
+
+Создаем новый middleware (/middleware/vars.js) для добавления в ответы POST заголовка с информацией о авторизации.
+```js
+module.exports = function(req, res, next) {
+  res.locals.isAuth = req.session.isAuthenticated
+  next()
+}
+```
+
+В главном файле index.js добавляем импорты и регистрируем middleware отвечающим за хранения сессий.
+```js
+const session = require('express-session')
+
+const varMiddleware = require('./middleware/variables')
+
+app.use(session({
+  secret: 'some secret value',
+  cookie: {
+    maxAge: 1000 * 60 * 60 * 24 * 7 // 1 week
+  },
+  resave: false,
+  saveUninitialized: false,
+  store
+}));
+
+app.use(varMiddleware);
+//Далее идут основные маршруты
+```
+
+
+#### Сохранения локальных сессий в MongoDB
+
+```js
+const MongoDBStore = require('connect-mongodb-session')(session);
+
+const store = new MongoDBStore({
+  uri: MONGODB_URI,
+  collections: 'sessions'
+});
+
+store.on('error', function(error) {
+  console.log(error);
+});
+
+
+app.use(session({
+  secret: 'This is a secret',
+  cookie: {
+    maxAge: 1000 * 60 * 60 * 24 * 7 // 1 week
+  },
+  resave: false,
+  saveUninitialized: false,
+  store: store
+}));
+
+////Далее идут основные маршруты
+```
+
+Теперь после авторизации, вся сессия пользователя будет сохранена в MongoDB.
+
+#### Защита роутов middleware
+
+Для защиты от перехода не авторизованных пользователей по заданным ссылкам применим middleware, который будет проверят при переходе на страницу авторизацию пользователя.
+Для этого создаем новый файл auth.js в папке /middleware
+```js
+// Middleware для проверки авторизации
+module.exports = function(req, res, next) {
+  // если параметр => req.session.isAuthenticated не true,
+  // значит пользователь не вошел в систему.
+  if (!req.session.isAuthenticated) {
+    // перенаправляем в страницу авторизации
+    return res.redirect('/auth/login')
+  }
+  // прошел проверку, все ОК!  
+  next()
+}
+```
+
+Далее необходимо добавить эту проверку в каждом роуте для каждой страницы:
+Пример, роут Add.js -добавляем в роуте для добавления курсов Проверку авторизации:
+```js
+// импорт middleware Auth
+const auth = require('../middleware/auth');
+
+//в роуте нужно добавить параметр "auth" после указания адреса.
+router.get('/', auth, (req, res) => {
+  res.render('add', {
+    title: 'Добавить курс',
+    isAdd: true
+  })
+})
+```
+#### Защита от CSRF-атаки
+Эффективным и общепринятым на сегодня способом защиты от CSRF-Атаки является токен. Под токеном имеется в виду случайный набор байт, который сервер передает клиенту, а клиент возвращает серверу.
+
+Защита сводится к проверке токена, который сгенерировал сервер, и токена, который прислал пользователь.
+
+Ипортируем и подключаем в /index.js файле модуль csurf 
+```js
+const csrf = require('csurf')
+
+app.use(csrf())
+````
+
+в файле /middleware/var.js добавляем переменную окружения csrf:
+```js
+module.exports = function(req, res, next) {
+  res.locals.isAuth = req.session.isAuthenticated
+  res.locals.csrf = req.csrfToken()
+  next()
+}
+````
+
+Добавляем CSURF токен во всех формах страниц:
 ```html
-<h1>Редактировать</h1>
+<input type="hidden" name="_csrf" value="{{csrf}}">
 
-<form action="/edit" method="POST" class="course-form">
-    <div class="input-field">
-        <input id="title" name="title" type="text" class="validate" required value="{{editCourse.title}}">
-        <label for="title">Название курса</label>
-        <span class="helper-text" data-error="Введите название"></span>
-    </div>
+или 
 
-    <div class="input-field">
-        <input id="price" name="price" type="number" class="validate" required min="1"  value="{{editCourse.price}}">
-        <label for="price">Цена курса</label>
-        <span class="helper-text" data-error="Введите цену"></span>
-    </div>
-
-    <div class="input-field">
-        <input id="img" name="img" type="text" class="validate" required  value="{{editCourse.img}}">
-        <label for="img">URL картинки</label>
-        <span class="helper-text" data-error="Введите url картинки"></span>
-    </div>
-
-    <input type="hidden" name="id" value="{{editCourse._id}}">
-
-    <button class="btn waves-effect waves-light"><i class="material-icons right">Редактировать курс</i></button>
-    <button type="submit" formaction="/edit/delete" class="btn red">Удалить курс</button>
-</form>
-```
-Основной роут для отображения страницы для Редактирование данных из mongoDB (edit.js):
-```js
-// Маршрут который прослушивает адрес /edit/:id
-router.get('/:id', async (req, res) => {
-    // метод .findById() = находит объекты по id из mongoDB
-    // req.params = получает значения из переданной адресной строки, где req.params.id == localhost/edit/:id
-    const editCourse = await Course.findById(req.params.id).lean()
-
-    // отрисовка страницы edit с данными title, course
-    res.render('course-edit', {
-        title: `Редактировать ${editCourse.title}`,
-        editCourse
-    });
-});
-// экспортируем маршрут
-module.exports = router;
-```
-
-## Обновление данных
-
-Роут для сохранения отредактированных данных
-
-```js
-router.post('/', async (req, res) => {
-    const id = req.body.id
-
-    // метод findByIdAndUpdate() находит выбранный курс по ID и обновляет содержимое курса
-    const course = await Course.findByIdAndUpdate(id, req.body);
-
-    res.redirect('/')
-});
-```
-
-## Удаление Данных
-Добавим кнопку удаления в index.hbs, где formaction="/edit/delete" будет указывать на маршрут
 ```html
- <button type="submit" formaction="/edit/delete" class="btn red">Удалить курс</button>
+<input type="hidden" name="_csrf" value="{{@root.csrf}}">
 ```
 
+Также токен можно передать ввиде параметра в форме
+```html
+<button class="btn btm-small js-remove" 
+    data-id="{{id}}" 
+    data-csrf="{{@root.csrf}}">
+    Удалить
+</button>
+``` 
 
-Роут для удаления данных
+и обработать в Vanilla JS
+
 ```js
-router.post('/', async (req, res) => {
-    const id = req.body.id
+const $card = document.querySelector('#card')
+if ($card) {
+  $card.addEventListener('click', event => {
+    if (event.target.classList.contains('js-remove')) {
+      const id = event.target.dataset.id
+      const csrf = event.target.dataset.csrf
+      
+      fetch('/card/remove/' + id, {
+        method: 'delete',
+        headers: {
+          'X-XSRF-TOKEN': csrf
+        },
+      }).then(res => res.json())
+        .then(card => {
+          if (card.courses.length) {
+            const html = card.courses.map(c => {
+              return `
+              <tr>
+                <td>${c.title}</td>
+                <td>${c.count}</td>
+                <td>
+                  <button class="btn btm-small js-remove" data-id="${c.id}">Удалить</button>
+                </td>
+              </tr>
+              `
+            }).join('')
+            $card.querySelector('tbody').innerHTML = html
+            $card.querySelector('.price').textContent = toCurrency(card.price)
+          } else {
+            $card.innerHTML = '<p>Корзина пуста</p>'
+          }
+        })
+    }
+  })
+} 
+````
 
-    // метод findByIdAndUpdate() находит выбранный курс по ID и обновляет содержимое курса
-    const course = await Course.findByIdAndDelete(id, req.body);
 
-    res.redirect('/')
-});
+#### Подключение сообщений
+После установки connect-flash, в /index.js импортируем и подключаем connect-flash:
+```js
+const flash = require('connect-flash')
+
+app.use(flash())
+````
+
+Далее в  роутах добавляем отправку сообщений: "req.flash('error', 'сообщение')"
+```js
+
+router.get('/login', async (req, res) => {
+  res.render('auth/login', {
+    title: 'Авторизация',
+    isLogin: true,
+    //включаем в рендеринг сообщение
+    error: req.flash('error')
+  })
+})
+
+router.post('/register', async (req, res) => {
+  try {
+    const {email, password, repeat, name} = req.body
+    const candidate = await User.findOne({ email })
+
+    if (candidate) {
+      //добавляем отправку сообщений об ошибке
+      req.flash('error', 'Пользователь с таким email уже существует')
+      res.redirect('/auth/login#register')
+    } else {
+      const hashPassword = await bcrypt.hash(password, 10)
+      const user = new User({
+        email, name, password: hashPassword, cart: {items: []}
+      })
+      await user.save()
+      res.redirect('/auth/login#login')
+    }
+  } catch (e) {
+    console.log(e)
+  }
+})
+```
+
+Также добавляем в html файлы необходимые обработчики сообщений:
+```html
+  {{#if error}}
+    <p class="alert">{{error}}</p>
+  {{/if}}
 ```
