@@ -52,7 +52,7 @@ async function startServer() {
         })
 
         app.listen(PORT, () => {
-            console.log(`Server is running on port ${PORT}`)
+            console.log(`Server is running on port http://localhost:${PORT}`)
         })
     } catch (e) {
         console.log(e)
