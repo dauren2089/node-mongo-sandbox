@@ -7,8 +7,8 @@ router.get('/login', async (req, res) => {
     res.render('auth/login', {
         title: 'Авторизация',
         isLogin: true,
-        // loginError: req.flash('loginError'),
-        // registerError: req.flash('registerError')
+        loginError: req.flash('loginError'),
+        registerError: req.flash('registerError')
     })
 })
 // Route для выхода из системы
@@ -43,7 +43,7 @@ router.post('/login', async (req, res) => {
                 res.redirect('/auth/login#login')
             }
         } else {
-            // req.flash('loginError', 'Неверный пароль или имя пользователя')
+            req.flash('loginError', 'Неверный пароль или имя пользователя')
             res.redirect('/auth/login#login')
         }
     } catch (e) {

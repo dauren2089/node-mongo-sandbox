@@ -1,4 +1,5 @@
 const csrf = require('csurf')
+const flash = require('connect-flash')
 const mongoose = require('mongoose')
 const session = require('express-session')
 const MongoDBStore = require('connect-mongodb-session')(session)
@@ -14,9 +15,8 @@ const editRoutes = require('./routes/edit');
 const coursesRoutes = require('./routes/courses');
 const addRoutes = require('./routes/add');
 const authRoutes = require('./routes/auth');
-const User = require('./models/user')
+// const User = require('./models/user')
 const varMiddleware = require('./middleware/variables')
-const userMiddleware = require('./middleware/user')
 
 const url = require('./credentials')
 const app = express();
@@ -29,7 +29,7 @@ const hbs = handlebars.create({
 
 const store = new MongoDBStore({
     collection: 'sessions',
-    uri: MONGODB_URI
+    uri: url.mongo.uri
 })
 
 store.on('error', function(error) {
@@ -53,20 +53,20 @@ app.use(session({
     store
 }));
 
+// основные middlewares
 app.use(csrf())
 app.use(flash())
 app.use(varMiddleware);
-app.use(userMiddleware);
 
 // Основные маршруты
 app.use('/', homeRoutes);
-// app.use('/courses', coursesRoutes);
 app.use('/add', addRoutes);
 app.use('/edit', editRoutes);
+// app.use('/card', cardRoutes)
+// app.use('/orders', ordersRoutes)
 app.use('/auth', authRoutes)
 
 const PORT = process.env.PORT || 3000
-
 // обработка страниц 404
 app.use(function (req, res){
     res.type('text/plain');
