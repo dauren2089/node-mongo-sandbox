@@ -6,9 +6,9 @@
                 <li class="tab col s6"><a href="#register">Регистрация</a></li>
             </ul>
         </div>
-        <div id="login" class="col s6 offset-s3">
+        <div id="login" class="col s6 offset-s3 form" >
             {{#if loginError}}
-                <div class="uk-alert-warning" uk-alert>
+                <div class="uk-alert-danger alert" uk-alert>
                     <a class="uk-alert-close" uk-close></a>
                     <p>{{loginError}}</p>
                 </div>
@@ -32,9 +32,9 @@
                 <button class="btn btn-primary" type="submit">Войти</button>
             </form>
         </div>
-        <div id="register" class="col s6 offset-s3">
+        <div id="register" class="col s6 offset-s3 form">
             {{#if registerError}}
-                <div class="uk-alert-warning" uk-alert>
+                <div class="uk-alert-danger alert" uk-alert>
                     <a class="uk-alert-close" uk-close></a>
                     <p>{{registerError}}</p>
                 </div>
