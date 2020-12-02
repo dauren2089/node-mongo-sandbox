@@ -1,4 +1,7 @@
-const mongoose = require('mongoose');
+const csrf = require('csurf')
+const mongoose = require('mongoose')
+const session = require('express-session')
+const MongoDBStore = require('connect-mongodb-session')(session)
 const express = require('express');
 const path = require('path');
 const handlebars = require('express-handlebars');
@@ -10,6 +13,7 @@ const homeRoutes = require('./routes/home');
 const editRoutes = require('./routes/edit');
 const coursesRoutes = require('./routes/courses');
 const addRoutes = require('./routes/add');
+const authRoutes = require('./routes/auth');
 
 const url = require('./credentials')
 
@@ -35,6 +39,7 @@ app.use('/', homeRoutes);
 // app.use('/courses', coursesRoutes);
 app.use('/add', addRoutes);
 app.use('/edit', editRoutes);
+app.use('/auth', authRoutes)
 
 // обработка страниц 404
 app.use(function (req, res){
