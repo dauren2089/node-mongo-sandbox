@@ -45,6 +45,26 @@ const courseSchema = new Schema({
 module.exports = model('Course', courseSchema)
 ````
 
+Создаем простую модель в user.js
+```js
+// Модель для пользователя
+const {Schema, model} = require('mongoose')
+
+const userSchema = new Schema({
+    email: {
+        type: String,
+        required: true
+    },
+    name: String,
+    password: {
+        type: String,
+        required: true
+    }
+})
+
+module.exports = model('User', userSchema)
+```
+
 ### Создание Роутов
 
 Основной роут перенаправления на главную страницу.
@@ -143,15 +163,6 @@ module.exports = router;
 
 В навигационной панели (navbar.handlebars) добавляем ссылки на страницу авторизации:
 ```html
-{{#if isLogin}}
-<li class="active"><a href="/auth/login">Войти</a></li>
-{{else}}
-<li><a href="/auth/login">Войти</a></li>
-{{/if}} 
-```
-
-В navbar.html настраиваем разделяем ссылки для показа
-```html
 <nav>
   <div class="nav-wrapper">
     <a href="#" class="brand-logo">Приложение курсов</a>
@@ -228,6 +239,7 @@ $ npm i connect-flash
 В главном файле /index.js добавляем импорты и регистрируем роут.
 ```js
 const csrf = require('csurf')
+const flash = require('connect-flash')
 const mongoose = require('mongoose')
 const exphbs = require('express-handlebars')
 const session = require('express-session')
@@ -548,9 +560,39 @@ router.post('/register', async (req, res) => {
 })
 ```
 
+
 Также добавляем в html файлы необходимые обработчики сообщений:
 ```html
   {{#if error}}
     <p class="alert">{{error}}</p>
   {{/if}}
 ```
+
+
+#### Исправляем ошибки подключения .populate(mongoose)
+Создаем новый файл user.js в папке /middleware
+```js
+const User = require('../models/user')
+
+module.exports = async function (req, res, next) {
+    if (!req.session.user) {
+        return next()
+    }
+
+    req.user = await User.findById(req.session.user._id)
+    next()
+}
+```
+Данный middleware должен исправить ошибку подключения .populate
+
+В файле index.js подключаем данный middleware
+```js
+const userMiddleware = require('./middleware/user');
+
+
+app.use(userMiddleware);
+```
+
+
+
+
