@@ -1,8 +1,9 @@
 const { Router } = require('express');
 const router = Router();
 const Course = require('../models/course');
+const auth = require('../middleware/auth')
 
-router.get('/:id', async (req, res) => {
+router.get('/:id', auth, async (req, res) => {
     if (!req.query.allow) {
         return res.redirect('/')
     }
@@ -19,18 +20,17 @@ router.get('/:id', async (req, res) => {
     });
 });
 
-router.post('/', async (req, res) => {
+router.post('/', auth , async (req, res) => {
     console.log(req.body.id, req.body._id)
     const id = req.body.id
     // const { id } = req.body
     // delete req.body.id
     // метод findByIdAndUpdate() находит выбранный курс по ID и обновляет содержимое курса
-    const course = await Course.findByIdAndUpdate(id, req.body);
+    await Course.findByIdAndUpdate(id, req.body);
     console.log("Updated!")
     res.redirect('/')
 });
-
-router.post('/delete', async (req, res) => {
+router.post('/delete', auth, async (req, res) => {
     await Course.findByIdAndDelete(req.body.id, req.body);
     console.log("Deleted!")
     res.redirect('/');

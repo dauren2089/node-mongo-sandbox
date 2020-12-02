@@ -2,14 +2,17 @@ const { Router } = require('express');
 const router = Router();
 const Course = require('../models/course');
 
-router.get('/', (req, res) => {
+// импорт middleware Auth
+const auth = require('../middleware/auth');
+
+router.get('/', auth, (req, res) => {
     res.render('add', {
         title: 'Add new Course',
         isAdd: true
     });
 });
 
-router.post('/', async (req, res) => {
+router.post('/', auth, async (req, res) => {
     // Создаем новый модель course c объектами title, price и img.
     // к которые будут брать значения с REQ.BODY.OBJECT переданные c формы.
     const course = new Course({
