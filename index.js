@@ -14,11 +14,12 @@ const editRoutes = require('./routes/edit');
 const coursesRoutes = require('./routes/courses');
 const addRoutes = require('./routes/add');
 const authRoutes = require('./routes/auth');
+const User = require('./models/user')
+const varMiddleware = require('./middleware/variables')
+const userMiddleware = require('./middleware/user')
 
 const url = require('./credentials')
-
 const app = express();
-
 const hbs = handlebars.create({
     defaultLayout: 'main',
     extname: 'hbs',
@@ -26,20 +27,45 @@ const hbs = handlebars.create({
     // handlebars: allowInsecurePrototypeAccess(Handlebars)
 });
 
+const store = new MongoDBStore({
+    collection: 'sessions',
+    uri: MONGODB_URI
+})
+
+store.on('error', function(error) {
+    console.log(error);
+});
+
 app.engine('hbs', hbs.engine)
 app.set('view engine', 'hbs')
 app.set('views', 'views')
 
-const PORT = process.env.PORT || 3000
-
 app.use(express.static(path.join(__dirname, 'public')))
 app.use(express.urlencoded({extended: true}))
+
+app.use(session({
+    secret: 'some secret value',
+    cookie: {
+        maxAge: 1000 * 60 * 60 * 24 * 7 // 1 week
+    },
+    resave: false,
+    saveUninitialized: false,
+    store
+}));
+
+app.use(csrf())
+app.use(flash())
+app.use(varMiddleware);
+app.use(userMiddleware);
+
 // Основные маршруты
 app.use('/', homeRoutes);
 // app.use('/courses', coursesRoutes);
 app.use('/add', addRoutes);
 app.use('/edit', editRoutes);
 app.use('/auth', authRoutes)
+
+const PORT = process.env.PORT || 3000
 
 // обработка страниц 404
 app.use(function (req, res){
