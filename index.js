@@ -69,9 +69,10 @@ app.use('/auth', authRoutes)
 const PORT = process.env.PORT || 3000
 // обработка страниц 404
 app.use(function (req, res){
-    res.type('text/plain');
+    // res.type('text/plain');
     res.status(404);
-    res.send('404 - Не найдено!');
+    // res.send('404 - Не найдено!');
+    res.render('404')
 });
 // Функция для запуска сервера
 async function startServer() {

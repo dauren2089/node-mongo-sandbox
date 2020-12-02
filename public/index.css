@@ -1,8 +1,21 @@
+@import url('https://fonts.googleapis.com/css?family=Nunito+Sans');
+:root {
+    --blue: #0e0620;
+    --white: #fff;
+    --green: #2ccf6d;
+}
+svg {
+    width: 100%;
+}
+
 a:hover {
     text-decoration: none;
     color: white;
 }
-
+a:visited {
+    text-decoration: none;
+    color: white;
+}
 .nav-wrapper {
     padding: 0 2rem;
 }

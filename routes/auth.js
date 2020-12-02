@@ -40,6 +40,7 @@ router.post('/login', async (req, res) => {
                     res.redirect('/')
                 })
             } else {
+                req.flash('loginError', 'Неверный пароль или имя пользователя')
                 res.redirect('/auth/login#login')
             }
         } else {
