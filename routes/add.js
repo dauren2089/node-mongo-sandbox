@@ -1,7 +1,6 @@
 const { Router } = require('express');
 const router = Router();
 const Course = require('../models/course');
-
 // импорт middleware Auth
 const auth = require('../middleware/auth');
 
@@ -20,7 +19,6 @@ router.post('/', auth, async (req, res) => {
         price: req.body.price,
         img: req.body.img
     });
-
     try {
         // сохраняем модель в БД
         await course.save();
@@ -29,7 +27,6 @@ router.post('/', auth, async (req, res) => {
     } catch (e) {
         console.log(e)
     }
-
 });
 
 module.exports = router;

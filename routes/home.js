@@ -18,5 +18,21 @@ router.get('/',  async (req, res) => {
     })
 });
 
+//Марштрут для страницы Course
+router.get('/course/:id', async (req, res) => {
+    // console.log("Params: ", req.params)
+    try {
+        const course = await Course.findById(req.params.id).lean()
+        // console.log("Course: ", course)
+        res.render('course', {
+            title: 'Главная страница',
+            isHome: true,
+            course
+        })
+    } catch (e) {
+        console.log(e)
+    }
+});
+
 // экспортируем маршрут
 module.exports = router;
