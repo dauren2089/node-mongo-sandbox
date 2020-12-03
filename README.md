@@ -45,6 +45,26 @@ const courseSchema = new Schema({
 module.exports = model('Course', courseSchema)
 ````
 
+Создаем простую модель в user.js
+```js
+// Модель для пользователя
+const {Schema, model} = require('mongoose')
+
+const userSchema = new Schema({
+    email: {
+        type: String,
+        required: true
+    },
+    name: String,
+    password: {
+        type: String,
+        required: true
+    }
+})
+
+module.exports = model('User', userSchema)
+```
+
 ### Создание Роутов
 
 Основной роут перенаправления на главную страницу.
@@ -143,15 +163,6 @@ module.exports = router;
 
 В навигационной панели (navbar.handlebars) добавляем ссылки на страницу авторизации:
 ```html
-{{#if isLogin}}
-<li class="active"><a href="/auth/login">Войти</a></li>
-{{else}}
-<li><a href="/auth/login">Войти</a></li>
-{{/if}} 
-```
-
-В navbar.html настраиваем разделяем ссылки для показа
-```html
 <nav>
   <div class="nav-wrapper">
     <a href="#" class="brand-logo">Приложение курсов</a>
@@ -228,6 +239,7 @@ $ npm i connect-flash
 В главном файле /index.js добавляем импорты и регистрируем роут.
 ```js
 const csrf = require('csurf')
+const flash = require('connect-flash')
 const mongoose = require('mongoose')
 const exphbs = require('express-handlebars')
 const session = require('express-session')
@@ -504,7 +516,6 @@ if ($card) {
 } 
 ````
 
-
 #### Подключение сообщений
 После установки connect-flash, в /index.js импортируем и подключаем connect-flash:
 ```js
@@ -548,7 +559,6 @@ router.post('/register', async (req, res) => {
 })
 ```
 
-
 Также добавляем в html файлы необходимые обработчики сообщений:
 ```html
   {{#if error}}
@@ -556,27 +566,132 @@ router.post('/register', async (req, res) => {
   {{/if}}
 ```
 
+## Подключение Обработчика ошибок SENTRY.io
 
-#### Исправляем ошибки подключения .populate(mongoose)
-Создаем новый файл user.js в папке /middleware
+Устанавливаем:
+```sh
+$ npm install --save @sentry/node @sentry/tracing
+```
+
+Настраиваем Sentry в index.js:
 ```js
-const User = require('../models/user')
+import * as Sentry from "@sentry/node";
+import * as Tracing from "@sentry/tracing";
 
-module.exports = async function (req, res, next) {
-    if (!req.session.user) {
-        return next()
-    }
+Sentry.init({
+    dsn: "https://fde71a2ff3a14c06ac7277794185ed82@o486174.ingest.sentry.io/5542517",
 
-    req.user = await User.findById(req.session.user._id)
-    next()
+  // We recommend adjusting this value in production, or using tracesSampler
+  // for finer control
+  tracesSampleRate: 1.0,
+});
+```
+
+Протестировать обработчик можно вставив следующий код в файл:
+```js
+const transaction = Sentry.startTransaction({
+  op: "test",
+  name: "My First Test Transaction",
+});
+
+setTimeout(() => {
+  try {
+    foo();
+  } catch (e) {
+    Sentry.captureException(e);
+  } finally {
+    transaction.finish();
+  }
+}, 99);
+```
+
+Теперь необходимо добавить следующий обработчик ошибок во все необходимые места в коде:
+```js
+try {
+  // ...
+} catch (e) {
+  Sentry.captureException(e);
 }
 ```
-Данный middleware должен исправить ошибку подключения .populate
 
-В файле index.js подключаем данный middleware
+## Отправка писем через MailGun
+
+Подключаем почтовый сервис по отправке писем. Почтовый сервис будем использоваеть Mailgun.
+
+После регистрации на сервисе, необходимо получить API-key, настроить DOMAIN и сохранить его в файле credentials:
+
 ```js
-const userMiddleware = require('./middleware/user');
+module.exports = {
+  MAILGUN_API_KEY: `API-key`,
+  DOMAIN: 'domain'
+}
+```
 
+Далее установим необходимые модули:
+```sh
+$ npm i mailgun-js
+```
 
-app.use(userMiddleware);
+Инициализируем транспортер для отправки писем:
+```js
+const credentials = require('../credentials')
+var mailgun = require('mailgun-js')({apiKey: MAILGUN_API_KEY, domain: DOMAIN});
+```
+
+Для отправки писем добавляем следующий код в необходимое место:
+```js
+const data = {
+  from: 'Excited User <me@samples.mailgun.org>',
+  to: 'bar@example.com, YOU@YOUR_DOMAIN_NAME',
+  subject: 'Hello',
+  text: 'Testing some Mailgun awesomness!'
+};
+
+mg.messages().send(data, (err, body) => {
+  if (err) {
+    console.log(`Error: ${err}`);
+  }
+  else {
+    console.log(`Response: ${body}`);
+  }
+});
+```
+
+#### Восстановление пароля
+
+Создаем страницу для восстановление пароля /views/auth/reset.hbs:
+```html
+<section class="courses">
+    <div class="row">
+        <div class="col s6 offset-s3">  
+            {{#if error}}
+            <p class="alert">{{error}}</p>
+            {{/if}}
+
+            <h1>Забыли пароль?</h1>
+            <form action="/auth/reset" method="POST">
+            <div class="input-field">
+                <input id="email" name="email" type="email" class="validate" required>
+                <label for="email">Email</label>
+                <span class="helper-text" data-error="Введите email"></span>
+            </div>
+
+            <input type="hidden" name="_csrf" value="{{csrf}}">
+
+            <button class="btn btn-primary" type="submit">Сбросить</button>
+            </form>
+        </div>
+    </div>
+</section>
+````
+
+Добавляем необходиый Роут для отображения страницы сброса пароля в /routes/auth.js:
+
+```js
+router.get('/reset', (req, res) => {
+  res.render('reset', {
+    title: 'Восстановление пароля',
+    error: req.flash('error')
+  })
+})
 ```
