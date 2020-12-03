@@ -657,5 +657,41 @@ mg.messages().send(data, (err, body) => {
 });
 ```
 
+#### Восстановление пароля
 
+Создаем страницу для восстановление пароля /views/auth/reset.hbs:
+```html
+<section class="courses">
+    <div class="row">
+        <div class="col s6 offset-s3">  
+            {{#if error}}
+            <p class="alert">{{error}}</p>
+            {{/if}}
 
+            <h1>Забыли пароль?</h1>
+            <form action="/auth/reset" method="POST">
+            <div class="input-field">
+                <input id="email" name="email" type="email" class="validate" required>
+                <label for="email">Email</label>
+                <span class="helper-text" data-error="Введите email"></span>
+            </div>
+
+            <input type="hidden" name="_csrf" value="{{csrf}}">
+
+            <button class="btn btn-primary" type="submit">Сбросить</button>
+            </form>
+        </div>
+    </div>
+</section>
+````
+
+Добавляем необходиый Роут для отображения страницы сброса пароля в /routes/auth.js:
+
+```js
+router.get('/reset', (req, res) => {
+  res.render('reset', {
+    title: 'Восстановление пароля',
+    error: req.flash('error')
+  })
+})
+```
