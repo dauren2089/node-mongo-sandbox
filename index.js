@@ -18,7 +18,7 @@ const authRoutes = require('./routes/auth');
 // const User = require('./models/user')
 const varMiddleware = require('./middleware/variables')
 
-const url = require('./credentials')
+const keys = require('./credentials')
 const app = express();
 const hbs = handlebars.create({
     defaultLayout: 'main',
@@ -29,7 +29,7 @@ const hbs = handlebars.create({
 
 const store = new MongoDBStore({
     collection: 'sessions',
-    uri: url.mongo.uri
+    uri: keys.MONGODB_URI
 })
 
 store.on('error', function(error) {
@@ -77,7 +77,7 @@ app.use(function (req, res){
 // Функция для запуска сервера
 async function startServer() {
     try {
-        await mongoose.connect(url.mongo.uri, {
+        await mongoose.connect(keys.MONGODB_URI, {
             useNewUrlParser: true,
             useUnifiedTopology: true,
             useFindAndModify: false
